@@ -14,15 +14,22 @@ char* database = "data";
 
 int initDatabaseConnection()
 {
+	conn= mysql_init(NULL);
+	printf("start database connection\n");
 	if(!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)){
-		fprintf(stderr, "%s\n", mysql_error(conn));
+		printf("error\n");
 		return 1;
-	}	
+	}
+	printf("done database connection\n");
 	return 0;
+}
+void getExtension(){
+
 }
 
 void init()
 {
+	printf("start init \n");
 	int i;
 	for(i=0;i<4096;i++)
 	{
@@ -32,16 +39,19 @@ void init()
 	{
 		printf("error setting up database connection\n");
 	}
+	printf("init done\n");
+	
 }
 
 //data should be starting with indentifier of 5 chars followed by 5 digits
 void getData(){
 	int i = 0;
 	int fd = serialOpen("/dev/ttyACM0",9600);
-	if(fd < 0){printf("error connecting to serial device\n");return 0;}
+
+	if(fd < 0){printf("error connecting to serial device\n");}
 	while(serialDataAvail(fd) >= 1)
 	{
-		data[i] = serialGetchar[fd];
+		data[i] = serialGetchar(fd);
 	}
 }
 
@@ -70,12 +80,12 @@ void getDataFromDataArray(){
 			for(k=0;k<5;k++)
 			{
 				singleDataInd[k] = data[i];
-				i++;			
+				i++;
 			}
 			for(k=0;k<5;k++)
 			{
 				singleDataVal[k] = data[i];
-				i++;			
+				i++;
 			}
 			char* dataI = singleDataInd;
 			char* dataV = singleDataVal;
