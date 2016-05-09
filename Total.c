@@ -13,7 +13,8 @@ char* password = "raspberry";
 char* database = "data";
 int fd;
 char extensionID[10];
-char* extension;
+char* extension = " ";
+int requestPin;
 
 int initDatabaseConnection()
 {
@@ -33,15 +34,20 @@ int initUart()
 	fd = serialOpen("/dev/ttyACM0",9600);
 	if(fd < 0){return 1;}
 	serialPutchar(fd,'t');
-	while(serialDataAvail(fd) >= 1)
-	{
-		extensionID[i] = serialGetchar(fd);
-		if(i == 10){
-			break;
+	delay(100);
+	while(extension == " "){
+		while(serialDataAvail(fd) >= 1)
+		{
+			extensionID[i] = serialGetchar(fd);
+			if(i == 10){
+				break;
+			}
+			i++;
 		}
-		i++;
+		extension = extensionID;
 	}
-	extension = extensionID;
+	for(i=0;i<10;i++){printf("%c",extensionID[i]);}
+	printf("\n%s \n",extension);
 	return 0;
 }
 
@@ -72,7 +78,7 @@ void init()
 	{
 		printf("error setting up database connection\n");
 	}
-	if(InitUart() == 1)
+	if(initUart() == 1)
 	{
 		printf("error connecting to serial device\n");
 	}
@@ -81,7 +87,7 @@ void init()
 
 //data should be starting with indentifier of 5 chars followed by 5 digits
 void getData(){
-	if(extension == "TM4C123GXL")
+	if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
 	{
 		for(requestPin = 0; requestPin < 12; requestPin++){
 			if(requestPin == 0){serialPuts(fd,"B");dataTM4[requestPin][0]='B';serialPuts(fd,"4");dataTM4[requestPin][1]='4';}
@@ -102,6 +108,7 @@ void getData(){
 				dataTM4[requestPin][j] = serialGetchar(fd);
 			}
 		}
+	printf("collection complete \n");
 	}
 	else
 	{
@@ -121,7 +128,7 @@ int writeToDatabase(char* dataValue,char* datatype)
 	sprintf(data,"INSERT INTO data(data,datatype) VALUES(%s,'%s');",dataValue,datatype );
 	char* Querry = data;
 	if(mysql_query(conn,Querry)){
-		printf("Error input data");
+		printf("Error input data\n");
 		return 1;
 	}
 	return 0;
@@ -132,7 +139,6 @@ void getDataFromDataArray()
 	int j,k;
 	int check = 1;
 	int i = 0;
-	
 	for(j=0;j<4096;j++)
 	{
 		if(check == 0){
@@ -169,20 +175,22 @@ void getDataFromDataArray()
 
 void sendDataTM4CDatabase()
 {
-	char ID[2];
+	char Indent[2];
 	char Data[3];
-	char* pID;
-	char* pData;
+	char* pID = "test";
+	char* pData = "test";
 	int i,j;
 	for(i=0;i<12;i++)
 	{
-		ID[0] = dataTM4[i][0];
-		ID[1] = dataTM4[i][1];
+		Indent[0] = dataTM4[i][0];
+		Indent[1] = dataTM4[i][1];
 		Data[0] = dataTM4[i][2];
 		Data[1] = dataTM4[i][3];
-		Data[3] = dataTM4[i][4];
-		pID = ID;
-		pData = data;
+		Data[2] = dataTM4[i][4];
+		pID = Indent;
+		pData = Data;
+		printf("%s\n",pID);
+		printf("%s\n",pData);
 		writeToDatabase(pData,pID);
 	}
 }
@@ -191,7 +199,7 @@ int main(void)
 {
 	init();
 	getData();
-	if(extension == "TM4C123GXL")
+	if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
 	{
 		sendDataTM4CDatabase();
 	}
