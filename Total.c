@@ -3,7 +3,7 @@
 #include <wiringPi.h>
 #include <mysql.h>
 
-
+char dataTM4[12][5];
 char data[4096];
 char indentifierchars[52] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
 MYSQL* conn;
@@ -11,6 +11,9 @@ char* server = "localhost";
 char* user = "root";
 char* password = "raspberry";
 char* database = "data";
+int fd;
+char extensionID[10];
+char* extension;
 
 int initDatabaseConnection()
 {
@@ -23,36 +26,93 @@ int initDatabaseConnection()
 	printf("done database connection\n");
 	return 0;
 }
-void getExtension(){
 
+int initUart()
+{
+	int i = 0;
+	fd = serialOpen("/dev/ttyACM0",9600);
+	if(fd < 0){return 1;}
+	serialPutchar(fd,'t');
+	while(serialDataAvail(fd) >= 1)
+	{
+		extensionID[i] = serialGetchar(fd);
+		if(i == 10){
+			break;
+		}
+		i++;
+	}
+	extension = extensionID;
+	return 0;
+}
+
+void initArrays(){
+	int i,j;
+	for(i=0;i<4096;i++)
+	{
+		data[i] = ' ';
+	}
+	for(i=0;i<10;i++)
+	{
+		extensionID[i] = ' ';
+	}
+	for(i=0;i<12;i++)
+	{
+		for(j=0;j<5;j++)
+		{
+			dataTM4[i][j] = ' ';
+		}
+	}
 }
 
 void init()
 {
 	printf("start init \n");
-	int i;
-	for(i=0;i<4096;i++)
-	{
-		data[i] = ' ';
-	}
+	initArrays();
 	if(initDatabaseConnection() == 1)
 	{
 		printf("error setting up database connection\n");
 	}
+	if(InitUart() == 1)
+	{
+		printf("error connecting to serial device\n");
+	}
 	printf("init done\n");
-	
 }
 
 //data should be starting with indentifier of 5 chars followed by 5 digits
 void getData(){
-	int i = 0;
-	int fd = serialOpen("/dev/ttyACM0",9600);
-
-	if(fd < 0){printf("error connecting to serial device\n");}
-	while(serialDataAvail(fd) >= 1)
+	if(extension == "TM4C123GXL")
 	{
-		data[i] = serialGetchar(fd);
+		for(requestPin = 0; requestPin < 12; requestPin++){
+			if(requestPin == 0){serialPuts(fd,"B");dataTM4[requestPin][0]='B';serialPuts(fd,"4");dataTM4[requestPin][1]='4';}
+			if(requestPin == 1){serialPuts(fd,"B");dataTM4[requestPin][0]='B';serialPuts(fd,"5");dataTM4[requestPin][1]='5';}
+			if(requestPin == 2){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"0");dataTM4[requestPin][1]='0';}
+			if(requestPin == 3){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"1");dataTM4[requestPin][1]='1';}
+			if(requestPin == 4){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"2");dataTM4[requestPin][1]='2';}
+			if(requestPin == 5){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"3");dataTM4[requestPin][1]='3';}
+			if(requestPin == 6){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"0");dataTM4[requestPin][1]='0';}
+			if(requestPin == 7){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"1");dataTM4[requestPin][1]='1';}
+			if(requestPin == 8){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"2");dataTM4[requestPin][1]='2';}
+			if(requestPin == 9){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"3");dataTM4[requestPin][1]='3';}
+			if(requestPin == 10){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"4");dataTM4[requestPin][1]='4';}
+			if(requestPin == 11){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"5");dataTM4[requestPin][1]='5';}
+			int j;
+			for(j = 2; j < 5; j++)
+			{
+				dataTM4[requestPin][j] = serialGetchar(fd);
+			}
+		}
 	}
+	else
+	{
+		int i = 0;
+		while(serialDataAvail(fd) >= 1)
+		{
+			data[i] = serialGetchar(fd);
+			i++;
+		}
+	}
+
 }
 
 int writeToDatabase(char* dataValue,char* datatype)
@@ -67,11 +127,12 @@ int writeToDatabase(char* dataValue,char* datatype)
 	return 0;
 }
 
-void getDataFromDataArray(){
-	getData();
+void getDataFromDataArray()
+{
 	int j,k;
 	int check = 1;
 	int i = 0;
+	
 	for(j=0;j<4096;j++)
 	{
 		if(check == 0){
@@ -106,10 +167,38 @@ void getDataFromDataArray(){
 	}
 }
 
+void sendDataTM4CDatabase()
+{
+	char ID[2];
+	char Data[3];
+	char* pID;
+	char* pData;
+	int i,j;
+	for(i=0;i<12;i++)
+	{
+		ID[0] = dataTM4[i][0];
+		ID[1] = dataTM4[i][1];
+		Data[0] = dataTM4[i][2];
+		Data[1] = dataTM4[i][3];
+		Data[3] = dataTM4[i][4];
+		pID = ID;
+		pData = data;
+		writeToDatabase(pData,pID);
+	}
+}
+
 int main(void)
 {
 	init();
-	getDataFromDataArray();
+	getData();
+	if(extension == "TM4C123GXL")
+	{
+		sendDataTM4CDatabase();
+	}
+	else
+	{
+		getDataFromDataArray();
+	}
 	printf("done\n");
 	return 0;
 }

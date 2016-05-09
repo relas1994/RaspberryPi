@@ -29,7 +29,7 @@ int main(void)
 		fprintf(stderr, "%s\n", mysql_error(conn));
 		return 0;
 	}
-
+/*
 	if(firstCreation == 0){
   		if(mysql_query(conn,"INSERT INTO deviceInfo(ipAddres) VALUES('192.168.134.153');"))
 		{
@@ -63,14 +63,14 @@ int main(void)
 				fputc(deviceID[i],fp);
 			}
 		}
-		deviceid = deviceID;
 		firstCreation = 1;
 	}
-	float dataValue = 3;
+*/
+	dataValue = 3;
 	char* datatype = "test";
 	if(firstCreation != 0){
 		char data[562];
-		sprintf(data,"INSERT INTO data(deviceID,data,datatype) VALUES(%s,%f,'%s');",deviceid,dataValue,datatype );
+		sprintf(data,"INSERT INTO data(data,datatype) VALUES(%s,%f,'%s');",dataValue,datatype );
 		printf("%s\n",&data);
 		char * Querry = data;
 		if(mysql_query(conn,Querry)){
