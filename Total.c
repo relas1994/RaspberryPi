@@ -119,7 +119,6 @@ void getData(){
 			i++;
 		}
 	}
-
 }
 
 int writeToDatabase(char* dataValue,char* datatype)
