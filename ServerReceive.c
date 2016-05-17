@@ -16,7 +16,7 @@ char* user = "root";
 char* password = "raspberry";
 char* database = "data";
 int fd;
-
+char buffer[32];
 int initDatabaseConnection()
 {
 	conn= mysql_init(NULL);
@@ -63,7 +63,7 @@ int getNextDeviceID()
 		printf("Error input data\n");
 		return -1;
 	}
-	MYSQL_RES *result = mysql_store_result(con);
+	MYSQL_RES *result = mysql_store_result(conn);
 	if (result == NULL) {
 		printf("error getting data\n");
 		return -1;
@@ -81,12 +81,6 @@ int getNextDeviceID()
 	return atoi(deviceInD) + 1;
 }
 
-
-void func( char* a ) {
-	
-	
-}
-
 void sendData( int sockfd, char* x ) {
 	int n;
 
@@ -97,14 +91,12 @@ void sendData( int sockfd, char* x ) {
 	buffer[n] = '\0';
 }
 
-char* getData( int sockfd ) {
-	char buffer[32];
+void getData( int sockfd ) {
 	int n;
 
 	if ( (n = read(sockfd,buffer,31) ) < 0 )
-    printf( "ERROR reading from socket");
+    		printf( "ERROR reading from socket");
 	buffer[n] = '\0';
-	return  *buffer;
 }
 
 int main(int argc, char *argv[]) {
@@ -127,20 +119,19 @@ int main(int argc, char *argv[]) {
 		printf( "ERROR on binding" );
     listen(sockfd,5);
     clilen = sizeof(cli_addr);
-  
+
     //--- infinite wait on a connection ---
     while ( 1 ) {
 		printf( "waiting for new client...\n" );
         if ( ( newsockfd = accept( sockfd, (struct sockaddr *) &cli_addr, (socklen_t*) &clilen) ) < 0 )
 			printf("ERROR on accept");
         printf( "opened new communication with client\n" );
-		
-		
+
         while ( data == " " ) {
             //---- wait for a number from client ---
-            data = getData( newsockfd );
-            printf( "got %s\n", data );
-		}
+            getData( newsockfd );
+	}
+	printf("got: %s",data);
 		int deviceID;
 		int deviceIDRecieved;
 		char deviceIDR[4];
@@ -152,7 +143,7 @@ int main(int argc, char *argv[]) {
 		}
 		deviceIDre = deviceIDR;
 		if(atoi(deviceIDre) > 0){
-			
+
 			deviceID =getNextDeviceID();
 			char IPadres[15];
 
@@ -168,15 +159,17 @@ int main(int argc, char *argv[]) {
 			char extensions[400];
 			for(;i<419;i++){
 				extensions[j] = data[i];
-				if(i == strlen){break;}
+				if(i == len){break;}
 				j++;
 			}
 			char* Extensions = extensions;
-			if((writeDeviceToDatabase(ipadres,Extensions);) == 1)
+			if((writeDeviceToDatabase(ipadres,Extensions)) == 1)
 				{
 					printf("Error writing to database device");
 				}
-			sendData( newsockfd,deviceID);
+			char DeviceID[4];
+			sprintf(DeviceID,"%d",deviceID);
+			sendData( newsockfd,DeviceID);
 		}
 		else
 		{
