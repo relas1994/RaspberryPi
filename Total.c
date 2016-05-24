@@ -85,41 +85,96 @@ void init()
 	printf("init done\n");
 }
 
-//data should be starting with indentifier of 5 chars followed by 5 digits
 void getData(){
-	if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
-	{
-		for(requestPin = 0; requestPin < 12; requestPin++){
-			if(requestPin == 0){serialPuts(fd,"B");dataTM4[requestPin][0]='B';serialPuts(fd,"4");dataTM4[requestPin][1]='4';}
-			if(requestPin == 1){serialPuts(fd,"B");dataTM4[requestPin][0]='B';serialPuts(fd,"5");dataTM4[requestPin][1]='5';}
-			if(requestPin == 2){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"0");dataTM4[requestPin][1]='0';}
-			if(requestPin == 3){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"1");dataTM4[requestPin][1]='1';}
-			if(requestPin == 4){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"2");dataTM4[requestPin][1]='2';}
-			if(requestPin == 5){serialPuts(fd,"D");dataTM4[requestPin][0]='D';serialPuts(fd,"3");dataTM4[requestPin][1]='3';}
-			if(requestPin == 6){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"0");dataTM4[requestPin][1]='0';}
-			if(requestPin == 7){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"1");dataTM4[requestPin][1]='1';}
-			if(requestPin == 8){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"2");dataTM4[requestPin][1]='2';}
-			if(requestPin == 9){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"3");dataTM4[requestPin][1]='3';}
-			if(requestPin == 10){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"4");dataTM4[requestPin][1]='4';}
-			if(requestPin == 11){serialPuts(fd,"E");dataTM4[requestPin][0]='E';serialPuts(fd,"5");dataTM4[requestPin][1]='5';}
-			int j;
+if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
+    	{
+        	for(requestPin = 0; requestPin < 12; requestPin++){
+			switch(requestPin){
+                	case 0:
+				serialPuts(fd,"B");
+				dataTM4[requestPin][0]='B';
+				serialPuts(fd,"4");									dataTM4[requestPin][1]='4';
+				break;
+			case 1:
+				serialPuts(fd,"B");
+				dataTM4[requestPin][0]='B';
+				serialPuts(fd,"5");
+				dataTM4[requestPin][1]='5';
+				break;
+			case 2:
+				serialPuts(fd,"D");
+				dataTM4[requestPin][0]='D';
+				serialPuts(fd,"0");
+				dataTM4[requestPin][1]='0';
+				break;
+			case 3:
+				serialPuts(fd,"D");
+				dataTM4[requestPin][0]='D';
+				serialPuts(fd,"1");
+				dataTM4[requestPin][1]='1';
+				break;
+			case 4:
+				serialPuts(fd,"D");
+				dataTM4[requestPin][0]='D';
+				serialPuts(fd,"2");
+				dataTM4[requestPin][1]='2';								break;
+			case 5:
+				serialPuts(fd,"D");
+				dataTM4[requestPin][0]='D';
+				serialPuts(fd,"3");
+				dataTM4[requestPin][1]='3';
+				break;
+			case 6:
+				serialPuts(fd,"E");
+				dataTM4[requestPin][0]='E';
+				serialPuts(fd,"0");
+				dataTM4[requestPin][1]='0'; 								break;
+			case 7:
+				serialPuts(fd,"E");
+				dataTM4[requestPin][0]='E';
+				serialPuts(fd,"1");
+				dataTM4[requestPin][1]='1'; 								break;
+			case 8:            
+				serialPuts(fd,"E");
+				dataTM4[requestPin][0]='E';
+				serialPuts(fd,"2");
+				dataTM4[requestPin][1]='2';
+				break;
+			case 9:            
+				serialPuts(fd,"E");
+				dataTM4[requestPin][0]='E';
+				serialPuts(fd,"3");
+				dataTM4[requestPin][1]='3'; 								break;
+			case 10:            
+				serialPuts(fd,"E");
+				dataTM4[requestPin][0]='E';
+				serialPuts(fd,"4");
+				dataTM4[requestPin][1]='4'; 								break;
+			case 11:            
+				serialPuts(fd,"E");
+				dataTM4[requestPin][0]='E';
+				serialPuts(fd,"5");
+				dataTM4[requestPin][1]='5'; 								break;
+			}
+	 		int j;
 			for(j = 2; j < 5; j++)
 			{
-				dataTM4[requestPin][j] = serialGetchar(fd);
-			}
-		}
-	printf("collection complete \n");
-	}
-	else
-	{
-		int i = 0;
-		while(serialDataAvail(fd) >= 1)
-		{
-			data[i] = serialGetchar(fd);
-			i++;
-		}
-	}
+      	          	dataTM4[requestPin][j] = serialGetchar(fd);
+	            }
+        	}
+		printf("collection complete \n");
+    	}
+    	else
+    	{
+        	int i = 0;
+        	while(serialDataAvail(fd) >= 1)
+        	{
+            	data[i] = serialGetchar(fd);
+            	i++;
+        	}
+    	}
 }
+
 
 int writeToDatabase(char* dataValue,char* datatype)
 {
