@@ -5,6 +5,7 @@
 #include<arpa/inet.h> //inet_addr
 #include<unistd.h>    //write
 
+#include<mysql.h>
 #include<pthread.h> //for threading , link with lpthread
 
 MYSQL* conn;
@@ -74,7 +75,7 @@ int getDeviceIDFromDatabase()
 	return nr+1;
 }
 
-void messageClient(char * message,int new_socket){
+void messageClient(char* message,int new_socket){
 	write(new_socket , message , strlen(message));
 }
 
@@ -84,9 +85,9 @@ void messageClient(char * message,int new_socket){
 void *connection_handler(void *socket_desc)
 {
     //Get the socket descriptor
-    int sock = *(int*)socket_desc;
-    int read_size;
-    char client_message[2000];
+    	int sock = *(int*)socket_desc;
+    	int read_size;
+    	char client_message[2000];
 	int deviceID;
 	char* clientIP;
 	char* extensions;
@@ -94,21 +95,22 @@ void *connection_handler(void *socket_desc)
 	char* dataType;
 
 	while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
-    {
+    	{
 		printf("reading\n");
 	}
 	if(client_message[0] == 'I' && client_message[1] == 'D')
 	{
 		printf("ID\n");
-		char message[50]
-		deviceid = getDeviceIDFromDatabase()
-		sprintf(message,"%d",deviceid);
-		messageClient(&message,new_socket)
+		char message[50];
+		deviceID = getDeviceIDFromDatabase();
+		sprintf(message,"%d",deviceID);
+		char* pointer = message;
+		messageClient(pointer, sock);
 	}
 	else if(client_message[0] == 'I' && client_message[1] == 'P')	
 	{
 		printf("IP\n");
-		char clientip[15] = {'/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0'}
+		char clientip[15];
 		for(i=0;i<15;i++)
 		{
 			clientip[i] = client_message[i+2];
@@ -118,10 +120,10 @@ void *connection_handler(void *socket_desc)
 		for(i=0;i<2000;i++)
 		{
 			clientMessage[i] = client_message[i+17];
-		}	
+		}
 		extensions = clientMessage;
 		writeToDatabaseDevice(clientIP,extensions);
-		messageClient("IP received",new_socket);
+		messageClient("IP received", sock);
 	}
 	else if(client_message[0] == 'D' && client_message[1] == 'A')
 	{
@@ -149,7 +151,7 @@ void *connection_handler(void *socket_desc)
 		}
 		dataType = dataTypeA;
 		writeToDatabaseData(data,dataType,atoi(deviceid));
-		messageClient("Data received",new_socket);
+		messageClient("Data received", sock);
 	}
 
     if(read_size == 0)
@@ -198,7 +200,7 @@ int main(int argc , char *argv[])
         printf("Connection accepted");
         //Reply to the client
         message = "connection accepted";
-        messageClient(message,new_sock);
+        messageClient(message,new_socket);
         pthread_t sniffer_thread;
         new_sock = malloc(1);
         *new_sock = new_socket;
