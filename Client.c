@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+=======
 /* A simple client program to interact with the myServer.c program on the Raspberry.
 myClient.c
 D. Thiebaut
@@ -10,6 +12,7 @@ This code is compiled and run on the Macbook laptop as follows:
 
 
 */
+>>>>>>> 0177a9f92ea5562d24c52a2bf5b18a122280b167
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -19,6 +22,14 @@ This code is compiled and run on the Macbook laptop as follows:
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+<<<<<<< HEAD
+#include <arpa/inet.h> 
+
+void sendData( int sockfd, char* x ) {
+  	int n;
+  	char buffer[32];
+  	sprintf( buffer, "%s\n", x );
+=======
 #include <errno.h>
 #include <arpa/inet.h> 
 
@@ -32,11 +43,21 @@ void sendData( int sockfd, int x ) {
 
   	char buffer[32];
   	sprintf( buffer, "%d\n", x );
+>>>>>>> 0177a9f92ea5562d24c52a2bf5b18a122280b167
   	if ( (n = write( sockfd, buffer, strlen(buffer) ) ) < 0 )
       		printf( "ERROR writing to socket");
   	buffer[n] = '\0';
 }
 
+<<<<<<< HEAD
+char* getData( int sockfd ) {
+  	char buffer[32];
+  	int n;
+  	if ( (n = read(sockfd,buffer,31) ) < 0 )
+       		printf( "ERROR reading from socket");
+  	buffer[n] = '\0';
+  	return &buffer;
+=======
 int getData( int sockfd ) {
   	char buffer[32];
   	int n;
@@ -45,6 +66,7 @@ int getData( int sockfd ) {
        		printf( "ERROR reading from socket");
   	buffer[n] = '\0';
   	return atoi( buffer );
+>>>>>>> 0177a9f92ea5562d24c52a2bf5b18a122280b167
 }
 
 int main(int argc, char *argv[])
@@ -54,6 +76,11 @@ int main(int argc, char *argv[])
     	struct sockaddr_in serv_addr;
     	struct hostent *server;
     	char buffer[256];
+<<<<<<< HEAD
+		char *deviceID= "\0";
+		char *messageR;
+=======
+>>>>>>> 0177a9f92ea5562d24c52a2bf5b18a122280b167
     	int data;
 
     	if (argc < 3) {
@@ -74,6 +101,36 @@ int main(int argc, char *argv[])
     	if ( connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) 
         	printf( "ERROR connecting");
 
+<<<<<<< HEAD
+		
+		while(deviceID == "\0")
+		{
+			sendData(sockfd,"ID");
+			deviceID = getData(sockfd);
+		}
+		char message[2000];
+		char* clientIP = "192.168.134.246";
+		char* extensions = "None";
+		sprintf(message,"IP%s%s",clientIP,extensions);
+		while(messageR != "IP received")
+		{
+			sendData(sockfd,&message);
+			messageR = getData(sockfd);
+		}
+		
+		
+		
+		while(messageR != "Data received")
+		{
+			
+		}
+		
+		sendData(sockFD,);
+		
+    	close( sockfd );
+    	return 0;
+}
+=======
     	for ( n = 0; n < 10; n++ ) {
       		sendData( sockfd, n );
       		data = getData( sockfd );
@@ -84,3 +141,4 @@ int main(int argc, char *argv[])
     	close( sockfd );
     	return 0;
 }
+>>>>>>> 0177a9f92ea5562d24c52a2bf5b18a122280b167

@@ -7,7 +7,164 @@
 
 #include<pthread.h> //for threading , link with lpthread
 
-void *connection_handler(void *);
+MYSQL* conn;
+char* server = "localhost";
+char* user = "root";
+char* password = "raspberry";
+char* database = "data";
+
+int i;
+
+int initDatabaseConnection()
+{
+	conn= mysql_init(NULL);
+	printf("start database connection\n");
+	if(!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)){
+		printf("error\n");
+		return 1;
+	}
+	printf("done database connection\n");
+	return 0;
+}
+
+int writeToDatabaseData(char* dataValue,char* datatype, int deviceID)
+{
+	char data[562];
+	sprintf(data,"INSERT INTO data(deviceID,data,datatype) VALUES(%d,%s,'%s');",deviceID,dataValue,datatype );
+	char* Querry = data;
+	if(mysql_query(conn,Querry)){
+		printf("Error input data\n");
+		return 1;
+	}
+	return 0;
+}
+
+int writeToDatabaseDevice(char* deviceIP,char* extensions)
+{
+	char data[562];
+	sprintf(data,"INSERT INTO device(deviceIP,extensions) VALUES('%s','%s');",deviceIP,extensions);
+	char* Querry = data;
+	if(mysql_query(conn,Querry)){
+		printf("Error input data\n");
+		return 1;
+	}
+	return 0;
+}
+
+int getDeviceIDFromDatabase()
+{
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	char data[562];
+	char* deviceidnr;
+	int nr;
+	sprintf(data,"SELECT deviceID FROM device ORDER BY deviceID ASC LIMIT 1;");
+	char* Querry = data;
+	if(mysql_query(conn,Querry)){
+		printf("Error input data\n");
+		return 1;
+	}
+	res = mysql_use_result(conn);
+	while ((row = mysql_fetch_row(res)) != NULL)
+	{
+		deviceidnr =row[0];
+	}
+	mysql_free_result(res);
+	nr = atoi(deviceidnr);
+	return nr+1;
+}
+
+void messageClient(char * message,int new_socket){
+	write(new_socket , message , strlen(message));
+}
+
+/*
+ * This will handle connection for each client
+ * */
+void *connection_handler(void *socket_desc)
+{
+    //Get the socket descriptor
+    int sock = *(int*)socket_desc;
+    int read_size;
+    char client_message[2000];
+	int deviceID;
+	char* clientIP;
+	char* extensions;
+	char* data;
+	char* dataType;
+
+	while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
+    {
+		printf("reading\n");
+	}
+	if(client_message[0] == 'I' && client_message[1] == 'D')
+	{
+		printf("ID\n");
+		char message[50]
+		deviceid = getDeviceIDFromDatabase()
+		sprintf(message,"%d",deviceid);
+		messageClient(&message,new_socket)
+	}
+	else if(client_message[0] == 'I' && client_message[1] == 'P')	
+	{
+		printf("IP\n");
+		char clientip[15] = {'/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0','/0'}
+		for(i=0;i<15;i++)
+		{
+			clientip[i] = client_message[i+2];
+		}
+		clientIP = clientip;
+		char clientMessage[2000];
+		for(i=0;i<2000;i++)
+		{
+			clientMessage[i] = client_message[i+17];
+		}	
+		extensions = clientMessage;
+		writeToDatabaseDevice(clientIP,extensions);
+		messageClient("IP received",new_socket);
+	}
+	else if(client_message[0] == 'D' && client_message[1] == 'A')
+	{
+		printf("Data\n");
+		char deviceid[4] = {'0','0','0','0'};
+		char dataA[2000];
+		char dataTypeA[2000];
+		for(i=0;i<4;i++)
+		{
+			deviceid[i] = client_message[i+2];
+		}
+		for(i=0;i<2000;i++)
+		{
+			if(client_message[i+6] == '/')
+			{
+				break;
+			}
+			dataA[i] = client_message[i+6];
+		}
+		data = dataA;
+		i++;
+		for(;i<2000;i++)
+		{
+			dataTypeA[i] = client_message[i+6];
+		}
+		dataType = dataTypeA;
+		writeToDatabaseData(data,dataType,atoi(deviceid));
+		messageClient("Data received",new_socket);
+	}
+
+    if(read_size == 0)
+    {
+        printf("Client disconnected");
+        fflush(stdout);
+    }
+    else if(read_size == -1)
+    {
+        printf("recv failed\n");
+    }
+    //Free the socket pointer
+    free(socket_desc);
+    return 0;
+}
 
 int main(int argc , char *argv[])
 {
@@ -27,21 +184,21 @@ int main(int argc , char *argv[])
     //Bind
     if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
     {
-        puts("bind failed");
+        printf("bind failed");
         return 1;
     }
-    puts("bind done");
+    printf("bind done");
     //Listen
     listen(socket_desc , 3);
     //Accept and incoming connection
-    puts("Waiting for incoming connections...");
+    printf("Waiting for incoming connections...");
     c = sizeof(struct sockaddr_in);
     while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
     {
-        puts("Connection accepted");
+        printf("Connection accepted");
         //Reply to the client
-        message = "Hello Client , I have received your connection. And now I will assign a handler for you\n";
-        write(new_socket , message , strlen(message));
+        message = "connection accepted";
+        messageClient(message,new_sock);
         pthread_t sniffer_thread;
         new_sock = malloc(1);
         *new_sock = new_socket;
@@ -52,7 +209,7 @@ int main(int argc , char *argv[])
         }
         //Now join the thread , so that we dont terminate before the thread
         //pthread_join( sniffer_thread , NULL);
-        puts("Handler assigned");
+        printf("Handler assigned");
     }
     if (new_socket<0)
     {
@@ -62,37 +219,3 @@ int main(int argc , char *argv[])
     return 0;
 }
 
-/*
- * This will handle connection for each client
- * */
-void *connection_handler(void *socket_desc)
-{
-    //Get the socket descriptor
-    int sock = *(int*)socket_desc;
-    int read_size;
-    char *message , client_message[2000];
-    //Send some messages to the client
-    message = "Greetings! I am your connection handler\n";
-    write(sock , message , strlen(message));
-
-    message = "Now type something and i shall repeat what you type \n";
-    write(sock , message , strlen(message));
-    //Receive a message from client
-    while( (read_size = recv(sock , client_message , 2000 , 0)) > 0 )
-    {
-        //Send the message back to client
-        write(sock , client_message , strlen(client_message));
-    }
-    if(read_size == 0)
-    {
-        puts("Client disconnected");
-        fflush(stdout);
-    }
-    else if(read_size == -1)
-    {
-        perror("recv failed");
-    }
-    //Free the socket pointer
-    free(socket_desc);
-    return 0;
-}
