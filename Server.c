@@ -30,6 +30,11 @@ int initDatabaseConnection()
 
 int writeToDatabaseData(char* dataValue,char* datatype, int deviceID)
 {
+	if(initDatabaseConnection() == 1)
+	{
+		return 1;
+		printf("error database connection");
+	}
 	char data[562];
 	sprintf(data,"INSERT INTO data(deviceID,data,datatype) VALUES(%d,%s,'%s');",deviceID,dataValue,datatype );
 	char* Querry = data;
@@ -37,11 +42,17 @@ int writeToDatabaseData(char* dataValue,char* datatype, int deviceID)
 		printf("Error input data\n");
 		return 1;
 	}
+	mysql_close(conn);
 	return 0;
 }
 
 int writeToDatabaseDevice(char* deviceIP,char* extensions)
 {
+	if(initDatabaseConnection() == 1)
+	{
+		printf("error database connection");
+		return 1;
+	}
 	char data[562];
 	sprintf(data,"INSERT INTO device(deviceIP,extensions) VALUES('%s','%s');",deviceIP,extensions);
 	char* Querry = data;
@@ -49,31 +60,45 @@ int writeToDatabaseDevice(char* deviceIP,char* extensions)
 		printf("Error input data\n");
 		return 1;
 	}
+	mysql_close(conn);
 	return 0;
 }
 
 int getDeviceIDFromDatabase()
 {
-	printf("hello\n");
+	if(initDatabaseConnection() == 1)
+	{
+		printf("error database connection\n");
+		return 1;
+	}
 	MYSQL_RES *res;
 	MYSQL_ROW row;
-	char data[562];
+	char data[562] = "/0";
 	char* deviceidnr;
-	int nr = 0;
+	int i;
 	sprintf(data,"SELECT deviceID FROM device ORDER BY deviceID ASC LIMIT 1;");
 	char* Querry = data;
 	if(mysql_query(conn,Querry)){
 		printf("Error input data\n");
 		return 1;
 	}
-	res = mysql_use_result(conn);
+	printf("query send\n");
+	res = mysql_store_result(conn);
+	int num_fields = mysql_num_fields(res);
 	while ((row = mysql_fetch_row(res)) != NULL)
 	{
-		deviceidnr =row[0];
+		for(i=0;i<num_fields;i++)
+		{
+			deviceidnr = row[i] ? row[i] : "NULL";
+			printf("deviceidnr: %s\n",deviceidnr);
+		}
+
 	}
+	int nr = atoi(deviceidnr)+1;
+	printf("%d\n",nr);
 	mysql_free_result(res);
-	nr = atoi(deviceidnr);
-	return nr+1;
+	mysql_close(conn);
+	return nr;
 }
 
 void messageClient(char* message,int new_socket){
@@ -99,15 +124,14 @@ void *connection_handler(void *socket_desc)
 		printf("reading\n");
 	}
 	if(client_message[0] == 'I' && client_message[1] == 'D')
-		{
+	{
 		printf("ID\n");
-		printf("%s",client_message);
 		char message[50];
 		deviceID = getDeviceIDFromDatabase();
-		printf("%d\n",deviceID);
+		printf("%d",deviceID);
 		sprintf(message,"%d",deviceID);
-		char* pointer = message;
-		messageClient(pointer, sock);
+		messageClient(message, sock);
+		printf("ID done");
 	}
 	else if(client_message[0] == 'I' && client_message[1] == 'P')	
 	{
@@ -172,13 +196,9 @@ void *connection_handler(void *socket_desc)
 
 int main(int argc , char *argv[])
 {
-	if(initDatabaseConnection() == 1)
-	{
-		printf("database error\n");
-	}
-	int nr = 0;
-	nr = getDeviceIDFromDatabase();
-	printf("%d\n",nr);
+	int nr = getDeviceIDFromDatabase();
+	int error = writeToDatabaseDevice("1.1.1","test");
+	error = writeToDatabaseData("42","test",nr);
 	int socket_desc , new_socket , c , *new_sock;
     	struct sockaddr_in server , client;
     	char *message;
