@@ -54,7 +54,7 @@ int writeToDatabaseDevice(char* deviceIP,char* extensions)
 
 int getDeviceIDFromDatabase()
 {
-	printf("hello");
+	printf("hello\n");
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	char data[562];
@@ -104,7 +104,7 @@ void *connection_handler(void *socket_desc)
 		printf("%s",client_message);
 		char message[50];
 		deviceID = getDeviceIDFromDatabase();
-		printf("%d",deviceID);
+		printf("%d\n",deviceID);
 		sprintf(message,"%d",deviceID);
 		char* pointer = message;
 		messageClient(pointer, sock);
@@ -158,7 +158,7 @@ void *connection_handler(void *socket_desc)
 
     	if(read_size == 0)
     	{
-        	printf("Client disconnected");
+        	printf("Client disconnected\n");
 	        fflush(stdout);
 	}
 	else if(read_size == -1)
@@ -174,11 +174,11 @@ int main(int argc , char *argv[])
 {
 	if(initDatabaseConnection() == 1)
 	{
-		printf("database error");
+		printf("database error\n");
 	}
 	int nr = 0;
 	nr = getDeviceIDFromDatabase();
-	printf("%d",nr);
+	printf("%d\n",nr);
 	int socket_desc , new_socket , c , *new_sock;
     	struct sockaddr_in server , client;
     	char *message;
@@ -186,7 +186,7 @@ int main(int argc , char *argv[])
     	socket_desc = socket(AF_INET , SOCK_STREAM , 0);
     	if (socket_desc == -1)
     	{
-        	printf("Could not create socket");
+        	printf("Could not create socket\n");
     	}
     	//Prepare the sockaddr_in structure
     	server.sin_family = AF_INET;
@@ -195,18 +195,18 @@ int main(int argc , char *argv[])
     	//Bind
     	if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
     	{
-        	printf("bind failed");
+        	printf("bind failed\n");
         	return 1;
     	}
-    	printf("bind done");
+    	printf("bind done\n");
     	//Listen
     	listen(socket_desc , 3);
     	//Accept and incoming connection
-    	printf("Waiting for incoming connections...");
+    	printf("Waiting for incoming connections\n");
     	c = sizeof(struct sockaddr_in);
     	while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
     	{
-        	printf("Connection accepted");
+        	printf("Connection accepted\n");
         	//Reply to the client
         	message = "connection accepted";
         	messageClient(message,new_socket);
@@ -215,16 +215,16 @@ int main(int argc , char *argv[])
         	*new_sock = new_socket;
         	if( pthread_create( &sniffer_thread , NULL , connection_handler , (void*) new_sock) < 0)
         	{
-            		printf("could not create thread");
+            		printf("could not create thread\n");
             		return 1;
         	}
         	//Now join the thread , so that we dont terminate before the thread
         	//pthread_join( sniffer_thread , NULL);
-        	printf("Handler assigned");
+        	printf("Handler assigned\n");
     	}
     	if (new_socket<0)
     	{
-        	printf("accept failed");
+        	printf("accept failed\n");
         	return 1;
     	}
 return 0;
