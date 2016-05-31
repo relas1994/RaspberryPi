@@ -15,7 +15,6 @@ char* password = "raspberry";
 char* database = "data";
 
 int i;
-
 int initDatabaseConnection()
 {
 	conn= mysql_init(NULL);
@@ -76,7 +75,7 @@ int getDeviceIDFromDatabase()
 	char data[562] = "/0";
 	char* deviceidnr;
 	int i;
-	sprintf(data,"SELECT deviceID FROM device ORDER BY deviceID ASC LIMIT 1;");
+	sprintf(data,"SELECT deviceID FROM device ORDER BY deviceID DESC LIMIT 1;");
 	char* Querry = data;
 	if(mysql_query(conn,Querry)){
 		printf("Error input data\n");
@@ -90,12 +89,10 @@ int getDeviceIDFromDatabase()
 		for(i=0;i<num_fields;i++)
 		{
 			deviceidnr = row[i] ? row[i] : "NULL";
-			printf("deviceidnr: %s\n",deviceidnr);
 		}
 
 	}
 	int nr = atoi(deviceidnr)+1;
-	printf("%d\n",nr);
 	mysql_free_result(res);
 	mysql_close(conn);
 	return nr;
@@ -197,133 +194,157 @@ void *connection_handler(void *socket_desc)
 
 int main(int argc , char *argv[])
 {
-	int nr = getDeviceIDFromDatabase();
-	int error = writeToDatabaseDevice("1.1.1","test");
-	error = writeToDatabaseData("42","test",nr);
-	
+//	int nr = getDeviceIDFromDatabase();
+//	int error = writeToDatabaseDevice("1.1.1","test");
+//	error = writeToDatabaseData("42","test",nr);
+	int i;
 	int read_size;
-    char client_message[2000];
+	char client_message[2000];
 	int deviceID;
 	char* clientIP;
 	char* extensions;
 	char* data;
 	char* dataType;
-	
+
 	int socket_desc , new_socket , c;
-    struct sockaddr_in server , client;
-    char *message;
-     
-    //Create socket
-    socket_desc = socket(AF_INET , SOCK_STREAM , 0);
-    if (socket_desc == -1)
-    {
-        printf("Could not create socket");
-    }
-     
-    //Prepare the sockaddr_in structure
-    server.sin_family = AF_INET;
-    server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons( 8888 );
-     
-    //Bind
-    if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
-    {
-        printf("bind failed");
-        return 1;
-    }
-    printf("bind done");
-     
-    //Listen
-    listen(socket_desc , 3);
-     
-    //Accept and incoming connection
-    printf("Waiting for incoming connections...");
-    c = sizeof(struct sockaddr_in);
-    while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
-    {
-        printf("Connection accepted");
-        
-		if ((read_size = recv(sock , client_message , 2000 , 0)) > 0 )
+    	struct sockaddr_in server , client;
+    	char *message;
+
+    	//Create socket
+    	socket_desc = socket(AF_INET , SOCK_STREAM , 0);
+    	if (socket_desc == -1)
     	{
-			printf("reading\n");
-		}
-		if(client_message[0] == 'I' && client_message[1] == 'D')
-		{
-			printf("ID\n");
-			char message[50];
-			deviceID = getDeviceIDFromDatabase();
-			printf("%d",deviceID);
-			sprintf(message,"%d",deviceID);
-			messageClient(message, sock);
-			printf("ID done\n");
-		}
-		else if(client_message[0] == 'I' && client_message[1] == 'P')	
-		{
-			printf("IP\n");
-			char clientip[15];
-			for(i=0;i<15;i++)
-			{
-				clientip[i] = client_message[i+2];
+        	printf("Could not create socket");
+    	}
+
+    	//Prepare the sockaddr_in structure
+    	server.sin_family = AF_INET;
+    	server.sin_addr.s_addr = INADDR_ANY;
+    	server.sin_port = htons( 8888 );
+
+    	//Bind
+    	if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
+    	{
+        	printf("bind failed");
+        	return 1;
+    	}
+    	printf("bind done");
+
+    	//Listen
+    	listen(socket_desc , 3);
+
+    	//Accept and incoming connection
+    	printf("Waiting for incoming connections...");
+    	c = sizeof(struct sockaddr_in);
+    	while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
+    	{
+        	while(1){
+                     	for(i=0;i<2000;i++)
+                        {
+                        	client_message[i] = ' ';
+                      	}
+
+			if ((recv(new_socket , client_message , 2000 , 0)) > 0 )
+    			{
+				printf("reading\n");
 			}
-			clientIP = clientip;
-			char clientMessage[2000];
-			for(i=0;i<2000;i++)
+			if(client_message[0] == 'I' && client_message[1] == 'D')
 			{
-				clientMessage[i] = client_message[i+17];		}
-				extensions = clientMessage;
-				writeToDatabaseDevice(clientIP,extensions);
-				messageClient("IP received", sock);
-		}
-		else if(client_message[0] == 'D' && client_message[1] == 'A')
-		{
-			printf("Data\n");
-			char deviceid[4] = {'0','0','0','0'};
-			char dataA[2000];
-			char dataTypeA[2000];
-			for(i=0;i<4;i++)
-			{
-				deviceid[i] = client_message[i+2];
+				printf("ID\n");
+				char message[50];
+				deviceID = getDeviceIDFromDatabase();
+				sprintf(message,"%d/",deviceID);
+				printf("%s\n",message);
+				printf("ID done\n");
+				for(i=0;i<2000;i++)
 			}
-			for(i=0;i<2000;i++)
+			else if(client_message[0] == 'I' && client_message[1] == 'P')
 			{
-				if(client_message[i+6] == '/')
+				printf("IP\n");
+				printf("%s\n",client_message);
+				char clientip[15];
+				for(i=0;i<15;i++)
 				{
-					break;
+					clientip[i] = client_message[i+2];
 				}
-				dataA[i] = client_message[i+6];
-			}
-			data = dataA;
-			i++;
-			for(;i<2000;i++)
+				printf("%d\n",i);
+				clientIP = clientip;
+				printf("%s\n",clientIP);
+				char clientMessage[2000];
+				for(i=0;i<2000;i++)
+				{
+					if(client_message[i+17] == '/')
+					{
+						break;
+					}
+					else
+					{
+						clientMessage[i] = client_message[i+17];
+					}
+				}
+				clientMessage[i] = ' ';
+				extensions = clientMessage;
+				printf("%s\n",extensions);
+				printf("%d\n",i);
+				writeToDatabaseDevice(clientIP,extensions);
+                              	messageClient("IP received", new_socket);
+        		}
+			else if(client_message[0] == 'D' && client_message[1] == 'A')
 			{
-				dataTypeA[i] = client_message[i+6];
+				printf("Data\n");
+				char deviceid[4] = {'0','0','0','0'};
+				char* deviceId;
+				char dataA[2000];
+				char dataTypeA[2000];
+				for(i=0;i<4;i++)
+				{
+					if(client_message[i+2] == '/')
+					{
+						break;
+					}
+					else
+					{
+						deviceid[i] = client_message[i+2];
+					}
+				}
+				deviceId = deviceid;
+				printf("%s\n",deviceId);
+				for(;i<2000;i++)
+				{
+					if(client_message[i+2] == '/')
+					{
+						break;
+					}
+					else
+					{
+						dataA[i] = client_message[i+2];
+					}
+				}
+				data = dataA;
+				printf("%s\n",data);
+				for(;i<2000;i++)
+				{
+					if(client_message[i+6] = '/')
+					{
+						break;
+					}
+					else
+					{
+						dataTypeA[i] = client_message[i+6];
+					}
+				}
+				dataType = dataTypeA;
+				printf("%s\n",dataType);
+				writeToDatabaseData(data,dataType,atoi(deviceid));
+                                messageClient("Data received", new_socket);
 			}
-			dataType = dataTypeA;
-			writeToDatabaseData(data,dataType,atoi(deviceid));
-			messageClient("Data received", sock);
-		}
-		
-		else if(read_size == 0)
+    		}
+	}
+	if (new_socket<0)
     	{
-			printf("Client disconnected\n");
-	        fflush(stdout);
-		}
-		else if(read_size == -1)
-		{
-			printf("recv failed\n");
-		}
-		
-        //Reply to the client
-        message = "Hello Client , I have received your connection. But I have to go now, bye\n";
-        write(new_socket , message , strlen(message));
-    }
-     
-    if (new_socket<0)
-    {
-        printf("accept failed");
-        return 1;
-    }
-     
-    return 0;
+       		 printf("accept failed");
+        	return 1;
+    	}
+return 0;
 }
 
