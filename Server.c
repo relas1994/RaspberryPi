@@ -142,12 +142,7 @@ void *connection_handler(void *socket_desc)
 		clientIP = clientip;
 		char clientMessage[2000];
 		for(i=0;i<2000;i++)
-		{
-			clientMessage[i] = client_message[i+17];
-		}
-		extensions = clientMessage;
-		writeToDatabaseDevice(clientIP,extensions);
-		messageClient("IP received", sock);
+essageClient("IP received", sock);
 	}
 	else if(client_message[0] == 'D' && client_message[1] == 'A')
 	{
@@ -203,7 +198,6 @@ int main(int argc , char *argv[])
 	int deviceID;
 	char* clientIP;
 	char* extensions;
-	char* data;
 	char* dataType;
 
 	int socket_desc , new_socket , c;
@@ -253,10 +247,10 @@ int main(int argc , char *argv[])
 				printf("ID\n");
 				char message[50];
 				deviceID = getDeviceIDFromDatabase();
-				sprintf(message,"%d/",deviceID);
+				sprintf(message,"%d",deviceID);
 				printf("%s\n",message);
+				messageClient(message,new_socket);
 				printf("ID done\n");
-				for(i=0;i<2000;i++)
 			}
 			else if(client_message[0] == 'I' && client_message[1] == 'P')
 			{
@@ -292,14 +286,17 @@ int main(int argc , char *argv[])
 			else if(client_message[0] == 'D' && client_message[1] == 'A')
 			{
 				printf("Data\n");
-				char deviceid[4] = {'0','0','0','0'};
+				printf("%s\n",client_message);
+				char deviceid[4];
 				char* deviceId;
 				char dataA[2000];
+				char* data;
 				char dataTypeA[2000];
 				for(i=0;i<4;i++)
 				{
 					if(client_message[i+2] == '/')
 					{
+						printf("i: %d\n",i);
 						break;
 					}
 					else
@@ -308,33 +305,39 @@ int main(int argc , char *argv[])
 					}
 				}
 				deviceId = deviceid;
-				printf("%s\n",deviceId);
+				i++;
+				printf("deviceid: %s\n",deviceId);
 				for(;i<2000;i++)
 				{
 					if(client_message[i+2] == '/')
 					{
+						printf("i: %d\n",i);
 						break;
 					}
 					else
 					{
 						dataA[i] = client_message[i+2];
+						printf("data[%d]%c\n",i,dataA[i]);
 					}
 				}
 				data = dataA;
-				printf("%s\n",data);
+				i++;
+				printf("data: %s\n",data);
 				for(;i<2000;i++)
 				{
-					if(client_message[i+6] = '/')
+					if(client_message[i+2] = '/')
 					{
+						printf("i: %d\n",i);
 						break;
 					}
 					else
 					{
-						dataTypeA[i] = client_message[i+6];
+						dataTypeA[i] = client_message[i+2];
+						printf("dataTypeA[%d]:%c\n",i,dataTypeA[i]);
 					}
 				}
 				dataType = dataTypeA;
-				printf("%s\n",dataType);
+				printf("dataType: %s\n",dataType);
 				writeToDatabaseData(data,dataType,atoi(deviceid));
                                 messageClient("Data received", new_socket);
 			}
