@@ -4,9 +4,8 @@
 #include<sys/socket.h>
 #include<arpa/inet.h> //inet_addr
 #include<unistd.h>    //write
-
+#include<math.h>
 #include<mysql.h>
-#include<pthread.h> //for threading , link with lpthread
 
 MYSQL* conn;
 char* server = "localhost";
@@ -36,6 +35,7 @@ int writeToDatabaseData(char* dataValue,char* datatype, int deviceID)
 	}
 	char data[562];
 	sprintf(data,"INSERT INTO data(deviceID,data,datatype) VALUES(%d,%s,'%s');",deviceID,dataValue,datatype );
+	printf("%s\n",data);
 	char* Querry = data;
 	if(mysql_query(conn,Querry)){
 		printf("Error input data\n");
@@ -104,29 +104,30 @@ void messageClient(char* message,int new_socket){
 
 int main(int argc , char *argv[])
 {
-//	int nr = getDeviceIDFromDatabase();
-//	int error = writeToDatabaseDevice("1.1.1","test");
-//	error = writeToDatabaseData("42","test",nr);
 	int i;
 	int read_size;
 	char client_message[2000];
 	int deviceID = 0;
-	char* clientIP = " ";
 	char* extensions = " ";
 	char* dataType = " ";
-	char deviceid[4] = {' ',' ',' ',' '};
+	char deviceid[4] = {0,0,0,0};
 	char* deviceId = " ";
 	char dataA[2000];
 	char* data = " ";
 	char dataTypeA[2000];	
 	char clientMessage[2000];
-	
+        char clientip[15];
+        int firstBreak;
+        int secondBreak;
+	int thirdBreak;
+	int j;
+
 	for(i=0;i<2000;i++)
 	{
-		client_message[i] = ' ';
-		dataA[i] = ' ';
-		dataTypeA[i] = ' ';
-		clientMessage[i] = ' ';
+		client_message[i] = 0;
+		dataA[i] = 0;
+		dataTypeA[i] = 0;
+		clientMessage[i] = 0;
 	}
 	int socket_desc , new_socket , c;
     	struct sockaddr_in server , client;
@@ -161,106 +162,125 @@ int main(int argc , char *argv[])
     	while( (new_socket = accept(socket_desc, (struct sockaddr *)&client, (socklen_t*)&c)) )
     	{
         	while(1){
-                for(i=0;i<2000;i++)
-                {
-                    client_message[i] = ' ';
-                }
+                	for(i=0;i<2000;i++)
+                	{
+                    		client_message[i] = ' ';
+                	}
 
-				if ((recv(new_socket , client_message , 2000 , 0)) > 0 )
+			if ((recv(new_socket , client_message , 2000 , 0)) > 0 )
+			{
+					printf("reading\n");
+			}
+			if(client_message[0] == 'I' && client_message[1] == 'D')
+			{
+				printf("ID\n");
+				char message[50];
+				deviceID = getDeviceIDFromDatabase();
+				sprintf(message,"%d",deviceID);
+				printf("%s\n",message);
+				messageClient(message,new_socket);
+				printf("ID done\n");
+			}
+			else if(client_message[0] == 'I' && client_message[1] == 'P')
+			{
+				printf("IP\n");
+				printf("%s\n",client_message);
+				for(i=2;i<2000;i++)
 				{
-						printf("reading\n");
-				}
-				if(client_message[0] == 'I' && client_message[1] == 'D')
-				{
-					printf("ID\n");
-					char message[50];
-					deviceID = getDeviceIDFromDatabase();
-					sprintf(message,"%d",deviceID);
-					printf("%s\n",message);
-					messageClient(message,new_socket);
-					printf("ID done\n");
-				}
-				else if(client_message[0] == 'I' && client_message[1] == 'P')
-				{
-					printf("IP\n");
-					printf("%s\n",client_message);
-					char clientip[15];
-					for(i=0;i<15;i++)
+					if(client_message[i] == '/')
 					{
-						clientip[i] = client_message[i+2];
+						firstBreak = i;
+						break;
 					}
-					printf("%d\n",i);
-					clientIP = clientip;
-					printf("%s\n",clientIP);
-					
-					for(i=0;i<2000;i++)
+				}
+				printf("i:%d\n",firstBreak);
+				i++;
+				for(;i<2000;i++)
+				{
+					if(client_message[i] == '/')
 					{
-						if(client_message[i+17] == '/')
-						{
-							break;
-						}
-						else
-						{
-							clientMessage[i] = client_message[i+17];
-						}
+						secondBreak = i;
+						break;
 					}
-					clientMessage[i] = ' ';
-					extensions = clientMessage;
-					printf("%s\n",extensions);
-					printf("%d\n",i);
-					writeToDatabaseDevice(clientIP,extensions);
-                    messageClient("IP received", new_socket);
+				}
+				printf("i:%d\n",secondBreak);
+				j = 0;
+				for(i=2;i<firstBreak;i++)
+				{
+					clientip[j] = client_message[i];
+					printf("clientip:%c\n",clientip[i]);
+					j++;
+				}
+				i++;
+				for(j=0;i<secondBreak;i++)
+				{
+					clientMessage[j] = client_message[i];
+					j++;
+				}
+				printf("clientIP:%s\n",clientip);
+				printf("extensions:%s\n",clientMessage);
+				writeToDatabaseDevice(clientip,clientMessage);
+		         	messageClient("IP received", new_socket);
         		}
-				else if(client_message[0] == 'D' && client_message[1] == 'A')
+			else if(client_message[0] == 'D' && client_message[1] == 'A')
+			{
+				printf("Data\n");
+				printf("%s\n",client_message);
+				for(i=2;i<2000;i++)
 				{
-					printf("Data\n");
-					printf("%s\n",client_message);
-
-					for(i=0;i<4;i++)
+					if(client_message[i] == '/')
 					{
-						if(client_message[i+2] == '/')
-						{
-							break;
-						}
-						else
-						{
-							deviceid[i] = client_message[i+2];
-						}
+						firstBreak = i;
+						break;
 					}
-					deviceId = deviceid;
-					printf("deviceid: %s\n",deviceId);
-					for(;i<2000;i++)
-					{
-						if(client_message[i+2] == '/')
-						{
-							printf("i: %d\n",i);
-							break;
-						}
-						else
-						{
-							dataA[i] = client_message[i+2];
-						}
-					}
-					data = dataA;
-					printf("data: %s\n",data);
-					for(;i<2000;i++)
-					{
-						if(client_message[i+2] = '/')
-						{
-							printf("i: %d\n",i);
-							break;
-						}
-						else
-						{
-							dataTypeA[i] = client_message[i+2];
-							printf("dataTypeA[%d]:%c\n",i,dataTypeA[i]);
-						}
-					}
-					dataType = dataTypeA;
-					printf("dataType: %s\n",dataType);
-					writeToDatabaseData(data,dataType,atoi(deviceid));
-                    messageClient("Data received", new_socket);
 				}
+				printf("i:%d\n",firstBreak);
+				i++;
+				for(;i<2000;i++)
+				{
+					if(client_message[i] == '/')
+					{
+						secondBreak = i;
+						break;
+					}
+				}
+				printf("i:%d\n",secondBreak);
+				i++;
+				for(;i<2000;i++)
+				{
+					if(client_message[i] == '/')
+					{
+						thirdBreak = i;
+						break;
+					}
+				}
+				printf("i:%d\n",thirdBreak);
+				j=0;
+				for(i=2;i<firstBreak;i++)
+				{
+					deviceid[j] = client_message[i];
+					j++;
+				}
+				i++;
+				for(j=0;i<secondBreak;i++)
+				{
+					dataA[j] = client_message[i];
+					j++;
+				}
+				i++;
+				for(j=0;i<thirdBreak;i++)
+				{
+					dataTypeA[j] = client_message[i];
+					j++;
+				}
+				printf("deviceID: %s\n",deviceid);
+				printf("dataA: %s\n",dataA);
+				printf("dataTypeA: %s\n",dataTypeA);
+				int device = atoi(deviceid);
+				printf("device: %d\n",device);
+				writeToDatabaseData(dataA,dataTypeA,device);
+                    		messageClient("Data received", new_socket);
+			}
     		}
 	}
 	if (new_socket<0)
