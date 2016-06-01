@@ -18,12 +18,14 @@ void sendData( int sockfd, char* x ) {
   	char buffer[32];
   	sprintf( buffer, "%s\n", x );
   	if ( (n = write( sockfd, buffer, strlen(buffer) ) ) < 0 )
+	{
       		printf( "ERROR writing to socket");
 	}
 	printf("Done sending\n");
 }
 
-char* getData( int sockfd ) {
+char* getData( int sockfd )
+{
 	printf("get Data\n");
   	char buffer[2000];
 
@@ -34,30 +36,6 @@ char* getData( int sockfd ) {
 	char* message = buffer;
 	printf("done receiving\n");
   	return message;
-  	char buffer[32];
-  	int n;
-  	if ( (n = read(sockfd,buffer,31) ) < 0 )
-	{
-       		printf( "ERROR reading from socket");
-	}
-  	buffer[n] = '\0';
-  	return &buffer;
-}
-
-void initSetup(int sockfd)
-{
-	while(deviceID == "\0")
-	{
-		sendData(sockfd,"ID");
-		deviceID = getData(sockfd);
-	}
-	char message[2000];
-	sprintf(message,"IP%s%s",clientIP,extensions);
-	while(messageR != "IP received")
-	{
-		sendData(sockfd,&message);
-		messageR = getData(sockfd);
-	}
 }
 
 int main(int argc, char *argv[])
