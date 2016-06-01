@@ -102,91 +102,6 @@ void messageClient(char* message,int new_socket){
 	write(new_socket , message , strlen(message));
 }
 
-/*
- * This will handle connection for each client
- * */
- /*
-void *connection_handler(void *socket_desc)
-{
-    //Get the socket descriptor
-    int sock = *(int*)socket_desc;
-    int read_size;
-    char client_message[2000];
-	int deviceID;
-	char* clientIP;
-	char* extensions;
-	char* data;
-	char* dataType;
-	if ((read_size = recv(sock , client_message , 2000 , 0)) > 0 )
-    	{
-		printf("reading\n");
-	}
-	if(client_message[0] == 'I' && client_message[1] == 'D')
-	{
-		printf("ID\n");
-		char message[50];
-		deviceID = getDeviceIDFromDatabase();
-		printf("%d",deviceID);
-		sprintf(message,"%d",deviceID);
-		messageClient(message, sock);
-		printf("ID done\n");
-	}
-	else if(client_message[0] == 'I' && client_message[1] == 'P')	
-	{
-		printf("IP\n");
-		char clientip[15];
-		for(i=0;i<15;i++)
-		{
-			clientip[i] = client_message[i+2];
-		}
-		clientIP = clientip;
-		char clientMessage[2000];
-		for(i=0;i<2000;i++)
-essageClient("IP received", sock);
-	}
-	else if(client_message[0] == 'D' && client_message[1] == 'A')
-	{
-		printf("Data\n");
-		char deviceid[4] = {'0','0','0','0'};
-		char dataA[2000];
-		char dataTypeA[2000];
-		for(i=0;i<4;i++)
-		{
-			deviceid[i] = client_message[i+2];
-		}
-		for(i=0;i<2000;i++)
-		{
-			if(client_message[i+6] == '/')
-			{
-				break;
-			}
-			dataA[i] = client_message[i+6];
-		}
-		data = dataA;
-		i++;
-		for(;i<2000;i++)
-		{
-			dataTypeA[i] = client_message[i+6];
-		}
-		dataType = dataTypeA;
-		writeToDatabaseData(data,dataType,atoi(deviceid));
-		messageClient("Data received", sock);
-	}
-
-    	if(read_size == 0)
-    	{
-        	printf("Client disconnected\n");
-	        fflush(stdout);
-	}
-	else if(read_size == -1)
-	{
-		printf("recv failed\n");
-	}
-	//Free the socket pointer
-	free(socket_desc);
-	return 0;
-}*/
-
 int main(int argc , char *argv[])
 {
 //	int nr = getDeviceIDFromDatabase();
@@ -290,13 +205,16 @@ int main(int argc , char *argv[])
 				char deviceid[4];
 				char* deviceId;
 				char dataA[2000];
+				for(i=0;i<2000;i++)
+				{
+					dataA[i] = ' ';
+				}
 				char* data;
 				char dataTypeA[2000];
 				for(i=0;i<4;i++)
 				{
 					if(client_message[i+2] == '/')
 					{
-						printf("i: %d\n",i);
 						break;
 					}
 					else
@@ -317,7 +235,6 @@ int main(int argc , char *argv[])
 					else
 					{
 						dataA[i] = client_message[i+2];
-						printf("data[%d]%c\n",i,dataA[i]);
 					}
 				}
 				data = dataA;
