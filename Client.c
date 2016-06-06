@@ -39,14 +39,12 @@ char* getData( int sockfd )
 
 int main(int argc, char *argv[])
 {
-	char deviceid[100];
     int sockfd, portno = 8888, n;
     char serverIp[] = "192.168.1.103";
     struct sockaddr_in serv_addr;
     struct hostent *server;
     char buffer[256];
 	char *messageR;
-    int data;
 	int device = 0;
 	char* deviceID = "test";
 	char* servermsg = "test";

@@ -2,6 +2,15 @@
 #include <wiringSerial.h>
 #include <wiringPi.h>
 #include <mysql.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h> 
+#include <netdb.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <arpa/inet.h> 
 
 char dataTM4[12][5];
 char data[4096];
@@ -12,9 +21,48 @@ char* user = "root";
 char* password = "raspberry";
 char* database = "data";
 int fd;
-char extensionID[10];
+char extensionID[500];
 char* extension = " ";
 int requestPin;
+char *deviceID= "\0";
+char* clientIP = "192.168.134.246";
+char* extensions = "None";
+int sockfd, portno = 8888, n;
+char serverIp[] = "192.168.1.103";
+struct sockaddr_in serv_addr;
+struct hostent *server;
+char* deviceID = "test";
+char* servermsg = "test";
+int device = 0;
+	
+int initServerConnection()
+{
+	if (argc < 3) 
+	{
+     	printf( "contacting %s on port %d\n", serverIp, portno );
+	}
+    if ( ( sockfd = socket(AF_INET, SOCK_STREAM, 0) ) < 0 )
+	{
+        	printf( "ERROR opening socket");
+			return 1;
+	}
+
+    if ( ( server = gethostbyname( serverIp ) ) == NULL )
+	{
+        	printf("ERROR, no such host\n");
+			return 1;
+	}
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+    serv_addr.sin_port = htons(portno);
+    if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)
+	{
+        	printf( "ERROR connecting");
+			return 1;
+	}
+	return 0;
+}
 
 int initDatabaseConnection()
 {
@@ -70,6 +118,61 @@ void initArrays(){
 	}
 }
 
+char* getDataServer( int sockfd )
+{
+	printf("get Data\n");
+  	char buffer[2000];
+
+  	if ((recv(sockfd,buffer,2000,0)) < 0 )
+	{
+       		printf( "ERROR reading from socket");
+	}
+	char* message = buffer;
+	printf("done receiving\n");
+  	return message;
+}
+
+void getDeviceID(){
+	char buffer[500];
+  	sprintf(buffer, "ID/",);
+  	if ( (send( sockfd, buffer, strlen(buffer) ) ) < 0 )
+	{
+      		printf( "ERROR writing to socket");
+	}
+	printf("Done sending\n");
+	deviceID = getDataServer(sockfd);
+	printf("%s\n",deviceID);
+	while(deviceID == 0)
+	{}
+	device = atoi(deviceID);
+}
+
+void sendDeviceIP(){
+	char buf[500];
+	sprintf(buf,"IP%s/%s/",clientIP,extension)
+  	if ( (send( sockfd, buf, strlen(buffer) ) ) < 0 )
+	{
+      		printf( "ERROR writing to socket");
+	}
+	servermsg = getDataServer(sockfd);	
+	while(servermsg == "test")
+	{}
+	printf("%s\n",servermsg);
+}
+
+void sendDataServer(char* dataR, char* dataType){
+	char buf[500];
+	sprintf(buf,"DA%d/%s/%s/",device,dataR,dataType);
+  	if ( (send( sockfd, buf, strlen(buffer) ) ) < 0 )
+	{
+      		printf( "ERROR writing to socket");
+	}
+	servermsg = getData(sockfd);	
+
+	while(messageR != "Data received")
+	{}	
+}
+
 void init()
 {
 	printf("start init \n");
@@ -82,79 +185,92 @@ void init()
 	{
 		printf("error connecting to serial device\n");
 	}
+	if(initServerConnection() == 1)
+	{
+		printf("error setting up database connection\n");
+	}	
+	getDeviceID();
+	sendDeviceIP();
 	printf("init done\n");
 }
 
-void getData(){
-if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
+void getDataDevice(){
+	if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
     	{
         	for(requestPin = 0; requestPin < 12; requestPin++){
 			switch(requestPin){
-                	case 0:
-				serialPuts(fd,"B");
-				dataTM4[requestPin][0]='B';
-				serialPuts(fd,"4");									dataTM4[requestPin][1]='4';
-				break;
-			case 1:
-				serialPuts(fd,"B");
-				dataTM4[requestPin][0]='B';
-				serialPuts(fd,"5");
-				dataTM4[requestPin][1]='5';
-				break;
-			case 2:
-				serialPuts(fd,"D");
-				dataTM4[requestPin][0]='D';
-				serialPuts(fd,"0");
-				dataTM4[requestPin][1]='0';
-				break;
-			case 3:
-				serialPuts(fd,"D");
-				dataTM4[requestPin][0]='D';
-				serialPuts(fd,"1");
-				dataTM4[requestPin][1]='1';
-				break;
-			case 4:
-				serialPuts(fd,"D");
-				dataTM4[requestPin][0]='D';
-				serialPuts(fd,"2");
-				dataTM4[requestPin][1]='2';								break;
-			case 5:
-				serialPuts(fd,"D");
-				dataTM4[requestPin][0]='D';
-				serialPuts(fd,"3");
-				dataTM4[requestPin][1]='3';
-				break;
-			case 6:
-				serialPuts(fd,"E");
-				dataTM4[requestPin][0]='E';
-				serialPuts(fd,"0");
-				dataTM4[requestPin][1]='0'; 								break;
-			case 7:
-				serialPuts(fd,"E");
-				dataTM4[requestPin][0]='E';
-				serialPuts(fd,"1");
-				dataTM4[requestPin][1]='1'; 								break;
-			case 8:            
-				serialPuts(fd,"E");
-				dataTM4[requestPin][0]='E';
-				serialPuts(fd,"2");
-				dataTM4[requestPin][1]='2';
-				break;
-			case 9:            
-				serialPuts(fd,"E");
-				dataTM4[requestPin][0]='E';
-				serialPuts(fd,"3");
-				dataTM4[requestPin][1]='3'; 								break;
-			case 10:            
-				serialPuts(fd,"E");
-				dataTM4[requestPin][0]='E';
-				serialPuts(fd,"4");
-				dataTM4[requestPin][1]='4'; 								break;
-			case 11:            
-				serialPuts(fd,"E");
-				dataTM4[requestPin][0]='E';
-				serialPuts(fd,"5");
-				dataTM4[requestPin][1]='5'; 								break;
+                case 0:
+					serialPuts(fd,"B");
+					dataTM4[requestPin][0]='B';
+					serialPuts(fd,"4");									
+					dataTM4[requestPin][1]='4';
+					break;
+				case 1:
+					serialPuts(fd,"B");
+					dataTM4[requestPin][0]='B';
+					serialPuts(fd,"5");
+					dataTM4[requestPin][1]='5';
+					break;
+				case 2:
+					serialPuts(fd,"D");
+					dataTM4[requestPin][0]='D';
+					serialPuts(fd,"0");
+					dataTM4[requestPin][1]='0';
+					break;
+				case 3:
+					serialPuts(fd,"D");
+					dataTM4[requestPin][0]='D';
+					serialPuts(fd,"1");
+					dataTM4[requestPin][1]='1';
+					break;
+				case 4:
+					serialPuts(fd,"D");
+					dataTM4[requestPin][0]='D';
+					serialPuts(fd,"2");
+					dataTM4[requestPin][1]='2';								
+					break;
+				case 5:
+					serialPuts(fd,"D");
+					dataTM4[requestPin][0]='D';
+					serialPuts(fd,"3");
+					dataTM4[requestPin][1]='3';
+					break;
+				case 6:
+					serialPuts(fd,"E");
+					dataTM4[requestPin][0]='E';
+					serialPuts(fd,"0");
+					dataTM4[requestPin][1]='0'; 								
+					break;
+				case 7:
+					serialPuts(fd,"E");
+					dataTM4[requestPin][0]='E';
+					serialPuts(fd,"1");
+					dataTM4[requestPin][1]='1'; 								
+					break;
+				case 8:            
+					serialPuts(fd,"E");
+					dataTM4[requestPin][0]='E';
+					serialPuts(fd,"2");
+					dataTM4[requestPin][1]='2';
+					break;
+				case 9:            
+					serialPuts(fd,"E");
+					dataTM4[requestPin][0]='E';
+					serialPuts(fd,"3");
+					dataTM4[requestPin][1]='3'; 								
+					break;
+				case 10:            
+					serialPuts(fd,"E");
+					dataTM4[requestPin][0]='E';
+					serialPuts(fd,"4");
+					dataTM4[requestPin][1]='4'; 								
+					break;
+				case 11:            
+					serialPuts(fd,"E");
+					dataTM4[requestPin][0]='E';
+					serialPuts(fd,"5");
+					dataTM4[requestPin][1]='5'; 								
+					break;
 			}
 	 		int j;
 			for(j = 2; j < 5; j++)
@@ -164,17 +280,16 @@ if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
         	}
 		printf("collection complete \n");
     	}
-    	else
-    	{
-        	int i = 0;
-        	while(serialDataAvail(fd) >= 1)
-        	{
-            	data[i] = serialGetchar(fd);
-            	i++;
-        	}
-    	}
+    else
+    {
+       	int i = 0;
+       	while(serialDataAvail(fd) >= 1)
+       	{
+           	data[i] = serialGetchar(fd);
+           	i++;
+       	}
+    }
 }
-
 
 int writeToDatabase(char* dataValue,char* datatype)
 {
@@ -186,45 +301,6 @@ int writeToDatabase(char* dataValue,char* datatype)
 		return 1;
 	}
 	return 0;
-}
-
-void getDataFromDataArray()
-{
-	int j,k;
-	int check = 1;
-	int i = 0;
-	for(j=0;j<4096;j++)
-	{
-		if(check == 0){
-			char singleDataInd[5] = {' ',' ',' ',' ',' '};
-			char singleDataVal[5] = {' ',' ',' ',' ',' '};
-			for(k=0;k<5;k++)
-			{
-				singleDataInd[k] = data[i];
-				i++;
-			}
-			for(k=0;k<5;k++)
-			{
-				singleDataVal[k] = data[i];
-				i++;
-			}
-			char* dataI = singleDataInd;
-			char* dataV = singleDataVal;
-			writeToDatabase(dataI,dataV);
-		}
-		for(k=0;k<52;k++)
-		{
-			if(data[i] != indentifierchars[k])
-			{
-				check = 1;
-				i++;
-			}
-			else
-			{
-				check = 0;
-			}
-		}
-	}
 }
 
 void sendDataTM4CDatabase()
@@ -246,20 +322,24 @@ void sendDataTM4CDatabase()
 		printf("%s\n",pID);
 		printf("%s\n",pData);
 		writeToDatabase(pData,pID);
+		sendDataServer(pData,pID);
 	}
 }
 
 int main(void)
 {
 	init();
-	getData();
-	if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
-	{
-		sendDataTM4CDatabase();
-	}
-	else
-	{
-		getDataFromDataArray();
+	while(1){
+		getDataDevice();
+		if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
+		{
+			sendDataTM4CDatabase();
+		}
+		else
+		{
+			printf("no device found");
+		}
+		
 	}
 	printf("done\n");
 	return 0;
