@@ -320,6 +320,8 @@ void getDataDevice(){
 				break;
 			}
 			dataTM4e[1][j] = dataTM4eReceived[i+2];
+			i++;
+			j++;
 		}
 	}
     	else
@@ -344,7 +346,6 @@ int writeToDatabase(char* dataValue,char* datatype)
 	}
 	return 0;
 }
-
 
 void sendDataTM4eDatabase(void);
 {
