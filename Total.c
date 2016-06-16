@@ -158,8 +158,8 @@ void getDeviceID(){
 
 void sendDeviceIP(){
 	char buffer[500];
-	sprintf(buf,"IP%s/%s/",clientIP,extension)
-  	if ( (send( sockfd, buf, strlen(buffer), 0 ) ) < 0 )
+	sprintf(buffer,"IP%s/%s/",clientIP,extension);
+  	if ( (send( sockfd, buffer, strlen(buffer), 0 ) ) < 0 )
 	{
       		printf( "ERROR writing to socket");
 	}
@@ -171,8 +171,8 @@ void sendDeviceIP(){
 
 void sendDataServer(char* dataR, char* dataType){
 	char buffer[500];
-	sprintf(buf,"DA%d/%s/%s/",device,dataR,dataType);
-  	if ( (send( sockfd, buf, strlen(buffer), 0 ) ) < 0 )
+	sprintf(buffer,"DA%d/%s/%s/",device,dataR,dataType);
+  	if ( (send( sockfd, buffer, strlen(buffer), 0 ) ) < 0 )
 	{
       		printf( "ERROR writing to socket");
 	}
