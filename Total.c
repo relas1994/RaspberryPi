@@ -176,9 +176,9 @@ void sendDataServer(char* dataR, char* dataType){
 	{
       		printf( "ERROR writing to socket");
 	}
-	servermsg = getData(sockfd);	
+	servermsg = getDataServer(sockfd);	
 
-	while(messageR != "Data received")
+	while(servermsg != "Data received")
 	{}	
 }
 
@@ -293,7 +293,8 @@ void getDataDevice(){
     	}
 	else if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4' && extensionID[3] == 'e')
 	{
-		i=0;
+		int i=0;
+		int j=0;
 		serialPuts(fd,"T");
 		while(serialDataAvail(fd) >= 1)
 		{
