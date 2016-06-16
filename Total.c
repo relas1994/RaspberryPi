@@ -315,7 +315,7 @@ void getDataDevice(){
 		}
 		for(j=0;i<256;i++)
 		{
-			if(dataTm4eReceived[i+2] == '/')
+			if(dataTM4eReceived[i+2] == '/')
 			{
 				break;
 			}
@@ -346,7 +346,7 @@ int writeToDatabase(char* dataValue,char* datatype)
 }
 
 
-void sendDataTM4eDatabase();
+void sendDataTM4eDatabase(void);
 {
 	writeToDatabase(dataTM4e[0], "Temperature");
 	writeToDatabase(dataTM4e[1], "Humidity");
