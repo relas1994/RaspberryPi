@@ -347,7 +347,7 @@ int writeToDatabase(char* dataValue,char* datatype)
 	return 0;
 }
 
-void sendDataTM4eDatabase(void);
+void sendDataTM4eDatabase(void)
 {
 	writeToDatabase(dataTM4e[0], "Temperature");
 	writeToDatabase(dataTM4e[1], "Humidity");
