@@ -5,14 +5,16 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h> 
+#include <netdb.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 
 char dataTM4[12][5];
+char dataTM4eReceived[256];
+char dataTM4e[2][256];
 char data[4096];
 char indentifierchars[52] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
 MYSQL* conn;
@@ -34,7 +36,7 @@ struct hostent *server;
 char* deviceID = "test";
 char* servermsg = "test";
 int device = 0;
-	
+
 int initServerConnection()
 {
 	if (argc < 3) 
@@ -116,6 +118,17 @@ void initArrays(){
 			dataTM4[i][j] = ' ';
 		}
 	}
+	for(i=0;i<2;i++)
+	{
+		for(j=0;j<256;j++)
+		{
+			dataTM4e[i][j] = ' ';
+		}
+	}
+	for(i=0;i<256;i++)
+	{
+		dataTM4eReceived[i] = ' ';
+	}
 }
 
 char* getDataServer( int sockfd )
@@ -195,11 +208,13 @@ void init()
 }
 
 void getDataDevice(){
-	if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
+	if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4' && extensionID[3] == 'C')
     	{
-        	for(requestPin = 0; requestPin < 12; requestPin++){
-			switch(requestPin){
-                case 0:
+        	for(requestPin = 0; requestPin < 12; requestPin++)
+		{
+			switch(requestPin)
+			{
+		                case 0:
 					serialPuts(fd,"B");
 					dataTM4[requestPin][0]='B';
 					serialPuts(fd,"4");									
@@ -275,20 +290,50 @@ void getDataDevice(){
 	 		int j;
 			for(j = 2; j < 5; j++)
 			{
-      	          	dataTM4[requestPin][j] = serialGetchar(fd);
-	            }
+      	          		dataTM4[requestPin][j] = serialGetchar(fd);
+	            	}
         	}
 		printf("collection complete \n");
     	}
-    else
-    {
-       	int i = 0;
-       	while(serialDataAvail(fd) >= 1)
-       	{
-           	data[i] = serialGetchar(fd);
-           	i++;
-       	}
-    }
+	else if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4' && extensionID[3] == 'e')
+	{
+		i=0;
+		serialPuts(fd,"T");
+		while(serialDataAvail(fd) >= 1)
+		{
+			dataTM4eReceived[i] = serialGetchar(fd);
+			i++;
+			if(i == 256)
+			{
+				break;
+			}
+		}
+		for(i = 0; i < 256; i++)
+		{
+			if(dataTM4eReceived[i+2] == 'H')
+			{
+				break;
+			}
+			dataTM4e[0][i] = dataTM4eReceived[i+2];
+		}
+		for(j=0;i<256;i++)
+		{
+			if(dataTm4eReceived[i+2] == '/')
+			{
+				break;
+			}
+			dataTM4e[1][j] = dataTM4eReceived[i+2];
+		}
+	}
+    	else
+    	{
+       		int i = 0;
+       		while(serialDataAvail(fd) >= 1)
+       		{
+           		data[i] = serialGetchar(fd);
+           		i++;
+       		}
+   	}
 }
 
 int writeToDatabase(char* dataValue,char* datatype)
@@ -301,6 +346,15 @@ int writeToDatabase(char* dataValue,char* datatype)
 		return 1;
 	}
 	return 0;
+}
+
+
+void sendDataTM4eDatabase();
+{
+	writeToDatabase(dataTM4e[0], "Temperature");
+	writeToDatabase(dataTM4e[1], "Humidity");
+	sendDataServer(dataTM4e[0], "Temperature");
+	sendDataServer(dataTM4e[0], "Humidity");
 }
 
 void sendDataTM4CDatabase()
@@ -331,15 +385,18 @@ int main(void)
 	init();
 	while(1){
 		getDataDevice();
-		if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4')
+		if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4' && extensionID[3] == 'C')
 		{
 			sendDataTM4CDatabase();
+		}
+		if(extensionID[0] == 'T' && extensionID[1] == 'M' && extensionID[2] == '4' && extensionID[3] == 'e')
+		{
+			sendDataTM4eDatabase();
 		}
 		else
 		{
 			printf("no device found");
 		}
-		
 	}
 	printf("done\n");
 	return 0;
