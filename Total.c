@@ -321,7 +321,7 @@ void getDataDevice(){
 			}
 		}
 		printf("Temperature: %s test\n",dataTM4e[0]);
-		printf("dataTM4e: %s",dataTM4eReceived);
+		i = i+2;
 		for(j=0;i<50;i++)
 		{
 			if(dataTM4eReceived[i+2] == '/')
@@ -332,8 +332,6 @@ void getDataDevice(){
 			else
 			{
 				dataTM4e[1][j] = dataTM4eReceived[i+2];
-				printf("c: %c\n",dataTM4eReceived[i+2]);
-				i++;
 				j++;
 			}
 		}
@@ -365,9 +363,15 @@ int writeToDatabase(char* dataValue,char* datatype)
 void sendDataTM4eDatabase(void)
 {
 	writeToDatabase(dataTM4e[0], "Temperature");
+	printf("0:%s\n",dataTM4e[0]);
+	delay(500);
 	writeToDatabase(dataTM4e[1], "Humidity");
+	printf("1:%s\n",dataTM4e[1]);
+	delay(500);
 	sendDataServer(dataTM4e[0], "Temperature");
+	delay(500);
 	sendDataServer(dataTM4e[0], "Humidity");
+	delay(500);
 }
 
 void sendDataTM4CDatabase()
