@@ -14,10 +14,9 @@ char* clientIP = "192.168.134.246";
 char* extensions = "None";
 
 void sendData( int sockfd, char* x ) {
-  	int n;
   	char buffer[32];
   	sprintf( buffer, "%s\n", x );
-  	if ( (n = write( sockfd, buffer, strlen(buffer) ) ) < 0 )
+  	if ( (send( sockfd, buffer, strlen(buffer) ) ) < 0 )
 	{
       		printf( "ERROR writing to socket");
 	}
@@ -29,7 +28,7 @@ char* getData( int sockfd )
 	printf("get Data\n");
   	char buffer[2000];
 
-  	if ( (recv(sockfd,buffer,2000,0) ) < 0 )
+  	if ((recv(sockfd,buffer,2000,0)) < 0 )
 	{
        		printf( "ERROR reading from socket");
 	}
@@ -40,14 +39,12 @@ char* getData( int sockfd )
 
 int main(int argc, char *argv[])
 {
-	char deviceid[100];
     int sockfd, portno = 8888, n;
     char serverIp[] = "192.168.1.103";
     struct sockaddr_in serv_addr;
     struct hostent *server;
     char buffer[256];
 	char *messageR;
-    int data;
 	int device = 0;
 	char* deviceID = "test";
 	char* servermsg = "test";
