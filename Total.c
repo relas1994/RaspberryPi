@@ -13,8 +13,8 @@
 #include <arpa/inet.h>
 
 char dataTM4[12][5];
-char dataTM4eReceived[256];
-char dataTM4e[2][256];
+char dataTM4eReceived[50];
+char dataTM4e[2][50];
 char data[4096];
 char indentifierchars[52] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
 MYSQL* conn;
@@ -26,10 +26,10 @@ int fd;
 char extensionID[500];
 char* extension = " ";
 int requestPin;
-char* clientIP = "192.168.134.246";
+char* clientIP = "192.168.1.185";
 char* extensions = "None";
 int sockfd, portno = 8888, n;
-char serverIp[] = "192.168.1.103";
+char serverIp[] = "192.168.1.119";
 struct sockaddr_in serv_addr;
 struct hostent *server;
 char* deviceID = "test";
@@ -79,8 +79,9 @@ int initUart()
 	int i = 0;
 	fd = serialOpen("/dev/ttyACM0",9600);
 	if(fd < 0){return 1;}
+	delay(1000);
 	serialPutchar(fd,'t');
-	delay(100);
+	delay(1000);
 	while(extension == " "){
 		while(serialDataAvail(fd) >= 1)
 		{
@@ -116,12 +117,12 @@ void initArrays(){
 	}
 	for(i=0;i<2;i++)
 	{
-		for(j=0;j<256;j++)
+		for(j=0;j<50;j++)
 		{
 			dataTM4e[i][j] = ' ';
 		}
 	}
-	for(i=0;i<256;i++)
+	for(i=0;i<50;i++)
 	{
 		dataTM4eReceived[i] = ' ';
 	}
@@ -163,7 +164,7 @@ void sendDeviceIP(){
 	{
       		printf( "ERROR writing to socket");
 	}
-	servermsg = getDataServer(sockfd);	
+	servermsg = getDataServer(sockfd);
 	while(servermsg == "test")
 	{}
 	printf("%s\n",servermsg);
@@ -176,10 +177,10 @@ void sendDataServer(char* dataR, char* dataType){
 	{
       		printf( "ERROR writing to socket");
 	}
-	servermsg = getDataServer(sockfd);	
+	servermsg = getDataServer(sockfd);
 
 	while(servermsg != "Data received")
-	{}	
+	{}
 }
 
 void init()
@@ -197,7 +198,7 @@ void init()
 	if(initServerConnection() == 1)
 	{
 		printf("error setting up database connection\n");
-	}	
+	}
 	getDeviceID();
 	sendDeviceIP();
 	printf("init done\n");
@@ -213,7 +214,7 @@ void getDataDevice(){
 		                case 0:
 					serialPuts(fd,"B");
 					dataTM4[requestPin][0]='B';
-					serialPuts(fd,"4");									
+					serialPuts(fd,"4");
 					dataTM4[requestPin][1]='4';
 					break;
 				case 1:
@@ -238,7 +239,7 @@ void getDataDevice(){
 					serialPuts(fd,"D");
 					dataTM4[requestPin][0]='D';
 					serialPuts(fd,"2");
-					dataTM4[requestPin][1]='2';								
+					dataTM4[requestPin][1]='2';
 					break;
 				case 5:
 					serialPuts(fd,"D");
@@ -250,37 +251,37 @@ void getDataDevice(){
 					serialPuts(fd,"E");
 					dataTM4[requestPin][0]='E';
 					serialPuts(fd,"0");
-					dataTM4[requestPin][1]='0'; 								
+					dataTM4[requestPin][1]='0';
 					break;
 				case 7:
 					serialPuts(fd,"E");
 					dataTM4[requestPin][0]='E';
 					serialPuts(fd,"1");
-					dataTM4[requestPin][1]='1'; 								
+					dataTM4[requestPin][1]='1';
 					break;
-				case 8:            
+				case 8:
 					serialPuts(fd,"E");
 					dataTM4[requestPin][0]='E';
 					serialPuts(fd,"2");
 					dataTM4[requestPin][1]='2';
 					break;
-				case 9:            
+				case 9:
 					serialPuts(fd,"E");
 					dataTM4[requestPin][0]='E';
 					serialPuts(fd,"3");
-					dataTM4[requestPin][1]='3'; 								
+					dataTM4[requestPin][1]='3';
 					break;
-				case 10:            
+				case 10:
 					serialPuts(fd,"E");
 					dataTM4[requestPin][0]='E';
 					serialPuts(fd,"4");
-					dataTM4[requestPin][1]='4'; 								
+					dataTM4[requestPin][1]='4';
 					break;
-				case 11:            
+				case 11:
 					serialPuts(fd,"E");
 					dataTM4[requestPin][0]='E';
 					serialPuts(fd,"5");
-					dataTM4[requestPin][1]='5'; 								
+					dataTM4[requestPin][1]='5';
 					break;
 			}
 	 		int j;
@@ -296,6 +297,7 @@ void getDataDevice(){
 		int i=0;
 		int j=0;
 		serialPuts(fd,"T");
+		delay(1000);
 		while(serialDataAvail(fd) >= 1)
 		{
 			dataTM4eReceived[i] = serialGetchar(fd);
@@ -305,24 +307,35 @@ void getDataDevice(){
 				break;
 			}
 		}
-		for(i = 0; i < 256; i++)
+		printf("deviceData:%s\n",dataTM4eReceived);
+		for(i = 0; i < 50; i++)
 		{
 			if(dataTM4eReceived[i+2] == 'H')
 			{
 				break;
+				printf("found H\n");
 			}
-			dataTM4e[0][i] = dataTM4eReceived[i+2];
+			else
+			{
+				dataTM4e[0][i] = dataTM4eReceived[i+2];
+			}
 		}
-		for(j=0;i<256;i++)
+		printf("Temperature: %s\n",dataTM4e[0]);
+		for(j=0;i<50;i++)
 		{
 			if(dataTM4eReceived[i+2] == '/')
 			{
 				break;
+				printf("found /\n");
 			}
-			dataTM4e[1][j] = dataTM4eReceived[i+2];
-			i++;
-			j++;
+			else
+			{
+				dataTM4e[1][j] = dataTM4eReceived[i+2];
+				i++;
+				j++;
+			}
 		}
+	printf("Humidity: %s\n",dataTM4e[1]);
 	}
     	else
     	{
@@ -394,6 +407,7 @@ int main(void)
 		else
 		{
 			printf("no device found");
+			break;
 		}
 	}
 	printf("done\n");
