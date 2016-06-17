@@ -320,17 +320,19 @@ void getDataDevice(){
 				dataTM4e[0][i] = dataTM4eReceived[i+2];
 			}
 		}
-		printf("Temperature: %s\n",dataTM4e[0]);
+		printf("Temperature: %s test\n",dataTM4e[0]);
+		printf("dataTM4e: %s",dataTM4eReceived);
 		for(j=0;i<50;i++)
 		{
 			if(dataTM4eReceived[i+2] == '/')
 			{
 				break;
-				printf("found /\n");
+				printf("found / \n");
 			}
 			else
 			{
 				dataTM4e[1][j] = dataTM4eReceived[i+2];
+				printf("c: %c\n",dataTM4eReceived[i+2]);
 				i++;
 				j++;
 			}
