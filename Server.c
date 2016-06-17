@@ -280,6 +280,11 @@ int main(int argc , char *argv[])
 				printf("device: %d\n",device);
 				writeToDatabaseData(dataA,dataTypeA,device);
                     		messageClient("Data received", new_socket);
+				for(i=0;i<2000;i++)
+				{
+					dataTypeA[i] = 0;
+					dataA[i] = 0;
+				}
 			}
     		}
 	}
