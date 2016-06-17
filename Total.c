@@ -14,7 +14,8 @@
 
 char dataTM4[12][5];
 char dataTM4eReceived[50];
-char dataTM4e[2][50];
+char dataTM4eTemp[50];
+char dataTM4eHum[50];
 char data[4096];
 char indentifierchars[52] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
 MYSQL* conn;
@@ -115,16 +116,11 @@ void initArrays(){
 			dataTM4[i][j] = ' ';
 		}
 	}
-	for(i=0;i<2;i++)
-	{
-		for(j=0;j<50;j++)
-		{
-			dataTM4e[i][j] = ' ';
-		}
-	}
 	for(i=0;i<50;i++)
 	{
 		dataTM4eReceived[i] = ' ';
+		dataTM4eHum[i] = ' ';
+		dataTM4eTemp[i] = ' ';
 	}
 }
 
@@ -144,6 +140,12 @@ char* getDataServer( int sockfd )
 
 void getDeviceID(){
 	char buffer[500];
+        int i;
+        for(i=0;i<500;i++)
+        {
+                buffer[i] = ' ';
+        }
+
   	sprintf(buffer, "ID/");
   	if ( (send( sockfd, buffer, strlen(buffer), 0) ) < 0 )
 	{
@@ -159,6 +161,11 @@ void getDeviceID(){
 
 void sendDeviceIP(){
 	char buffer[500];
+        int i;
+        for(i=0;i<500;i++)
+        {
+                buffer[i] = ' ';
+        }
 	sprintf(buffer,"IP%s/%s/",clientIP,extension);
   	if ( (send( sockfd, buffer, strlen(buffer), 0 ) ) < 0 )
 	{
@@ -172,14 +179,20 @@ void sendDeviceIP(){
 
 void sendDataServer(char* dataR, char* dataType){
 	char buffer[500];
+	int i;
+	for(i=0;i<500;i++)
+	{
+		buffer[i] = ' ';
+	}
 	sprintf(buffer,"DA%d/%s/%s/",device,dataR,dataType);
   	if ( (send( sockfd, buffer, strlen(buffer), 0 ) ) < 0 )
 	{
       		printf( "ERROR writing to socket");
 	}
 	servermsg = getDataServer(sockfd);
-
-	while(servermsg != "Data received")
+	printf("%s\n",servermsg);
+	printf("%c\n",servermsg[0]);
+	while(servermsg[0] != 'D' && servermsg[1] != 'a' && servermsg[2] != 't' && servermsg[3] != 'a')
 	{}
 }
 
@@ -317,10 +330,10 @@ void getDataDevice(){
 			}
 			else
 			{
-				dataTM4e[0][i] = dataTM4eReceived[i+2];
+				dataTM4eTemp[i] = dataTM4eReceived[i+2];
 			}
 		}
-		printf("Temperature: %s test\n",dataTM4e[0]);
+		printf("Temperature: %s test\n",dataTM4eTemp);
 		i = i+2;
 		for(j=0;i<50;i++)
 		{
@@ -331,11 +344,11 @@ void getDataDevice(){
 			}
 			else
 			{
-				dataTM4e[1][j] = dataTM4eReceived[i+2];
+				dataTM4eHum[j] = dataTM4eReceived[i+2];
 				j++;
 			}
 		}
-	printf("Humidity: %s\n",dataTM4e[1]);
+	printf("Humidity: %s\n",dataTM4eHum);
 	}
     	else
     	{
@@ -362,16 +375,16 @@ int writeToDatabase(char* dataValue,char* datatype)
 
 void sendDataTM4eDatabase(void)
 {
-	writeToDatabase(dataTM4e[0], "Temperature");
-	printf("0:%s\n",dataTM4e[0]);
-	delay(500);
-	writeToDatabase(dataTM4e[1], "Humidity");
-	printf("1:%s\n",dataTM4e[1]);
-	delay(500);
-	sendDataServer(dataTM4e[0], "Temperature");
-	delay(500);
-	sendDataServer(dataTM4e[0], "Humidity");
-	delay(500);
+	writeToDatabase(dataTM4eTemp, "Temperature");
+	delay(1000);
+	writeToDatabase(dataTM4eHum, "Humidity");
+	delay(1000);
+	sendDataServer(dataTM4eTemp, "Temperature");
+	printf("done temperature\n");
+	delay(1000);
+	sendDataServer(dataTM4eHum, "Humidity");
+	printf("done humidity\n");
+	delay(1000);
 }
 
 void sendDataTM4CDatabase()

@@ -26,6 +26,22 @@
 					echo $row['data'].'<br>';
 				}
 			}
+
+                        $sql = "SELECT data FROM data WHERE datatype = 'humidity' ORDER BY timestamp DESC LIMIT 1";
+                        if(!$res = mysqli_query($link,$sql))
+                        {
+                                trigger_error('Fout in query: '.mysqli_error());
+                        }
+                        else
+                        {
+                                echo "Humidity: ";
+                                while($row = mysqli_fetch_assoc($res))
+                                {
+                                        echo $row['data'].'<br>';
+                                }
+                        }
+
+			header("Refresh:5; URL=index.php");
 		?>
 		<br></br>
 		<img src="local.png"width="500"height="500"alt="QR code"class="qr"/>
